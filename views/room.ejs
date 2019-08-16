@@ -1,1 +1,62 @@
-<p><%= test %></p>
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+
+<!-- The core Firebase JS SDK is always required and must be listed first -->
+<script src="https://www.gstatic.com/firebasejs/6.3.5/firebase-app.js"></script>
+
+
+
+<!-- Add Firebase products that you want to use -->
+<script src="https://www.gstatic.com/firebasejs/6.3.4/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/6.3.4/firebase-firestore.js"></script>
+
+<script>
+  // Your web app's Firebase configuration
+  var firebaseConfig = {
+    apiKey: "AIzaSyB7IhY6ENIFHUjkaTVQ8UJua9MChQSlA28",
+    authDomain: "patient-queue-89500.firebaseapp.com",
+    databaseURL: "https://patient-queue-89500.firebaseio.com",
+    projectId: "patient-queue-89500",
+    storageBucket: "patient-queue-89500.appspot.com",
+    messagingSenderId: "331684236394",
+    appId: "1:331684236394:web:1b8d89f19453feaf"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+</script>
+
+
+<h1 style = "display:none;" id = "roomId"><%= roomId %></h1>
+<h2 id = "roomDescriptionDisplay"></h2>
+<h3 id = "roomLocationDisplay"></h3>
+
+<form id="verification-form">
+  <h4>Please enter the 6 digit code to verify you are in the correct room</h4>
+  <input id = "passcode-input" type = "number">
+  <button>Submit</button>
+</form>
+
+<script>
+  var roomId = $('#roomId').text();
+  var passcode;
+  var verified = false;
+  console.log("running");
+  db.collection("waiting-rooms").doc(roomId).get().then((snapshot)=>{
+      $('#roomDescriptionDisplay').html("Welcome to the " + snapshot.data().description);
+      $('#roomLocationDisplay').html(snapshot.data().location);
+      passcode = snapshot.data().passcode;
+  })
+
+  $('#verification-form').submit(function(e){
+    e.preventDefault();
+    if ($('#passcode-input').val() == passcode){
+      console.log("verified");
+      verified = true;
+      $('#verification-form').css('display','none');
+    }
+  });
+
+</script>
