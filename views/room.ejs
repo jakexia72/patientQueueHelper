@@ -10,6 +10,7 @@
 <!-- Add Firebase products that you want to use -->
 <script src="https://www.gstatic.com/firebasejs/6.3.4/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/6.3.4/firebase-firestore.js"></script>
+<script src="/scripts/uiEmbelishment.js" charset="utf-8"></script>
 
 <script>
   // Your web app's Firebase configuration
@@ -39,6 +40,13 @@ const db = firebase.firestore();
   <button>Submit</button>
 </form>
 
+
+<form id ="newPatient-form">
+  <h4 id = "patientNumber"></h4>
+  <p>your number in line</p>
+  <h5 id = "positionInQueue"></h5>
+</form>
+
 <script>
   var roomId = $('#roomId').text();
   var passcode;
@@ -46,9 +54,14 @@ const db = firebase.firestore();
   console.log("running");
   db.collection("waiting-rooms").doc(roomId).get().then((snapshot)=>{
       $('#roomDescriptionDisplay').html("Welcome to the " + snapshot.data().description);
-      $('#roomLocationDisplay').html(snapshot.data().location);
+      let loc = snapshot.data().location
+      $('#roomLocationDisplay').html(loc.building + " " + getOrdinal(loc.floor) + " floor, room " + loc.room);
       passcode = snapshot.data().passcode;
   })
+
+
+  var patientsRef = db.collection("waiting-rooms").doc(roomId).collection("patients");
+  var newPatientNumber;
 
   $('#verification-form').submit(function(e){
     e.preventDefault();
@@ -56,7 +69,20 @@ const db = firebase.firestore();
       console.log("verified");
       verified = true;
       $('#verification-form').css('display','none');
+      patientsRef.orderBy('timestamp').limit(1).get().then((snapshot)=>{
+          snapshot.docs.forEach((patient)=>{
+            newPatientNumber = patient.data().patientNumber + 1;
+            console.log("new patient number = " + newPatientNumber);
+          })
+      })
     }
   });
+
+  function makeNewPatientForm(){
+    $('#patientNumber').html(newPatientNumber);
+  }
+
+
+
 
 </script>

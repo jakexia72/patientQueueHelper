@@ -25,7 +25,7 @@ app.get('/waitingRooms/:roomId/:patientId', (req, res) => {
   const roomId = req.params.roomId;
   const patientId = req.params.patientId;
   console.log(roomId);
-    res.render(path + "/views/patientView", {roomId});
+    res.render(path + "/views/patientView", {roomId,patientId});
 });
 
 
