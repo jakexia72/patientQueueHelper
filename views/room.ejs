@@ -12,6 +12,9 @@
 <script src="https://www.gstatic.com/firebasejs/6.3.4/firebase-firestore.js"></script>
 <script src="/scripts/uiEmbelishment.js" charset="utf-8"></script>
 
+<link rel="stylesheet" href="/styles/style.css">
+<script src="/scripts/main.js" charset="utf-8"></script>
+
 <script>
   // Your web app's Firebase configuration
   var firebaseConfig = {
@@ -29,11 +32,12 @@ const db = firebase.firestore();
 
 </script>
 
-
+<body>
+<div class = "mainContainer">
 <h1 style = "display:none;" id = "roomId"><%= roomId %></h1>
 <h2 id = "roomDescriptionDisplay"></h2>
 <h3 id = "roomLocationDisplay"></h3>
-
+<br>
 <form id="verification-form">
   <h4>Please enter the 6 digit code to verify you are in the correct room</h4>
   <input id = "passcode-input" type = "number">
@@ -41,20 +45,34 @@ const db = firebase.firestore();
 </form>
 
 
-<form id ="newPatient-form">
-  <h4 id = "patientNumber"></h4>
-  <p>your number in line</p>
-  <h5 id = "positionInQueue"></h5>
+<form id ="newPatient-form" style = "display: none;">
+  <p>Your Ticker Number:</p>
+  <h4 id = "ticketNum"></h4>
+  <p>Pick an avatar</p>
+  <div class = "avatarSelection">
+    <div data-id = "1" class = "avatarSelect" style = "background-image:url(/images/avatars/1.svg)"></div>
+    <div data-id = "2" class = "avatarSelect" style = "background-image:url(/images/avatars/2.svg)"></div>
+    <div data-id = "3" class = "avatarSelect avatarSelect-selected" style = "background-image:url(/images/avatars/3.svg)"></div>
+    <div data-id = "4" class = "avatarSelect" style = "background-image:url(/images/avatars/4.svg)"></div>
+    <div data-id = "5" class = "avatarSelect" style = "background-image:url(/images/avatars/5.svg)"></div>
+  </div>
+  <br>
+  <button id = "joinLineBtn" class = "btn btn-primary btn-lg btn-block">Join the Line</button>
 </form>
+
+</div>
+</body>
 
 <script>
   var roomId = $('#roomId').text();
   var passcode;
   var verified = false;
+  var roomNum;
   console.log("running");
   db.collection("waiting-rooms").doc(roomId).get().then((snapshot)=>{
       $('#roomDescriptionDisplay').html("Welcome to the " + snapshot.data().description);
       let loc = snapshot.data().location
+      roomNum = loc.room;
       $('#roomLocationDisplay').html(loc.building + " " + getOrdinal(loc.floor) + " floor, room " + loc.room);
       passcode = snapshot.data().passcode;
   })
@@ -62,6 +80,7 @@ const db = firebase.firestore();
 
   var patientsRef = db.collection("waiting-rooms").doc(roomId).collection("patients");
   var newPatientNumber;
+  var patientAvatarNumber = 3;
 
   $('#verification-form').submit(function(e){
     e.preventDefault();
@@ -69,17 +88,55 @@ const db = firebase.firestore();
       console.log("verified");
       verified = true;
       $('#verification-form').css('display','none');
-      patientsRef.orderBy('timestamp').limit(1).get().then((snapshot)=>{
-          snapshot.docs.forEach((patient)=>{
-            newPatientNumber = patient.data().patientNumber + 1;
-            console.log("new patient number = " + newPatientNumber);
-          })
-      })
+      $("#newPatient-form").css("display","block");
+      makeNewPatientForm();
     }
   });
 
+  $(document).ready(function(){
+    $('.avatarSelect').click(function(){
+      console.log("Clicked");
+      $('.avatarSelect').removeClass('avatarSelect-selected');
+      $(this).addClass('avatarSelect-selected');
+      patientAvatarNumber = $(this).data("id")
+    });
+
+    $('#joinLineBtn').click(function(e){
+      e.preventDefault();
+      let curTimeStamp = new Date();
+      patientsRef.add({
+        timestamp: curTimeStamp,
+        patientNumber: newPatientNumber,
+        avatarNumber: patientAvatarNumber
+      }).then(function(docRef) {
+        console.log("Document written with ID: ", docRef.id);
+        window.open("http://localhost:7123/waitingRooms/" + roomId + "/" + docRef.id, "_self");
+  });
+    })
+  });
+
+
+
   function makeNewPatientForm(){
-    $('#patientNumber').html(newPatientNumber);
+    patientsRef.orderBy('timestamp', 'desc').limit(1).get().then((snapshot)=>{
+      if(snapshot.docs.length == 0){
+        newPatientNumber = roomNum * 100;
+      }
+        snapshot.docs.forEach((patient)=>{
+          newPatientNumber = patient.data().patientNumber + 1;
+          console.log("new patient number = " + newPatientNumber);
+            $('#ticketNum').html(newPatientNumber);
+        })
+    });
+    // patientsRef.get().then(function(snapshot) {
+    //   patientsBefore = snapshot.size;
+    //   if(patientsBefore == 0){
+    //     $('#patientsBefore').html("You are first in line!");
+    //   } else if (patientsBefore == 1){
+    //     $('#patientsBefore').html("You are next in line!");
+    //   }
+    //   $('#patientsBefore').html(patientsBefore);
+    // });
   }
 
 

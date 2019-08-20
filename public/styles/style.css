@@ -1,0 +1,38 @@
+body{
+  width:100%;
+  height: 100%;
+  background: lightblue;
+  display: flex;
+  align-content: center;
+  align-items: center;
+  justify-content: center;
+}
+.mainContainer{
+  background: white;
+  padding: 20px;
+}
+.avatarSelection{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+    align-items: center;
+    height: 75px;
+}
+.avatarSelect{
+  width: 45px;
+  height: 45px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 80%;
+  border-radius: 20px;
+  -webkit-transition: 0.4s ease;
+ -moz-transition: 0.4s ease;
+-o-transition: 0.4s ease;
+ -ms-transition: 0.4s ease;
+ transition: 0.4s ease;
+}
+
+.avatarSelect-selected{
+  width: 75px;
+  height: 75px;
+}
