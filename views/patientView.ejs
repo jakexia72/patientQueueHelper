@@ -10,6 +10,10 @@
 <!-- Add Firebase products that you want to use -->
 <script src="https://www.gstatic.com/firebasejs/6.3.4/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/6.3.4/firebase-firestore.js"></script>
+<script src="/scripts/uiEmbelishment.js" charset="utf-8"></script>
+
+<link rel="stylesheet" href="/styles/style.css">
+<script src="/scripts/main.js" charset="utf-8"></script>
 
 <script>
   // Your web app's Firebase configuration
@@ -24,16 +28,29 @@
   };
   // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 </script>
 
-<h1 style = "display:none;" id = "roomId"><%= roomId %></h1>
-<h1 style = "display:none;" id = "patientId"><%= patientId %></h1>
-
+<body>
+<div class = "mainContainer">
+  <h1 style = "display:none;" id = "roomId"><%= roomId %></h1>
+  <h1 style = "display:none;" id = "patientId"><%= patientId %></h1>
+  <h1 id = "ticketNum"></h1>
+</div>
+</body>
 
 
 <script>
     var roomId = $('#roomId').text();
-    var patientId = $('patientId').text();
+    var patientId = $('#patientId').text();
+    var patientTimeStamp;
+    var patientNumber;
+    var patientAvatarNumber;
 
-    
+    db.collection("waiting-rooms").doc(roomId).collection("patients").doc(patientId).get().then((snapshot)=>{
+      let patient = snapshot.data();
+      $('#ticketNum').html(patient.patientNumber);
+    })
+
 </script>

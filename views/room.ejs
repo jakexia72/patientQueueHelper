@@ -68,6 +68,7 @@ const db = firebase.firestore();
   var passcode;
   var verified = false;
   var roomNum;
+  var defaultProcedureTime;
   console.log("running");
   db.collection("waiting-rooms").doc(roomId).get().then((snapshot)=>{
       $('#roomDescriptionDisplay').html("Welcome to the " + snapshot.data().description);
@@ -75,6 +76,7 @@ const db = firebase.firestore();
       roomNum = loc.room;
       $('#roomLocationDisplay').html(loc.building + " " + getOrdinal(loc.floor) + " floor, room " + loc.room);
       passcode = snapshot.data().passcode;
+      defaultProcedureTime = snapshot.data().defaultProcedureTime;
   })
 
 
@@ -107,7 +109,8 @@ const db = firebase.firestore();
       patientsRef.add({
         timestamp: curTimeStamp,
         patientNumber: newPatientNumber,
-        avatarNumber: patientAvatarNumber
+        avatarNumber: patientAvatarNumber,
+        estimatedProcedureTime: defaultProcedureTime
       }).then(function(docRef) {
         console.log("Document written with ID: ", docRef.id);
         window.open("http://localhost:7123/waitingRooms/" + roomId + "/" + docRef.id, "_self");
