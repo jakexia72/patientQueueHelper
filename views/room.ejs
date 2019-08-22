@@ -39,7 +39,7 @@ const db = firebase.firestore();
 <h3 id = "roomLocationDisplay"></h3>
 <br>
 <form id="verification-form">
-  <h4>Please enter the 6 digit code to verify you are in the correct room</h4>
+  <h4 id="verificationFormHeading">Please enter the 6 digit code to verify you are in the correct room</h4>
   <input id = "passcode-input" type = "number">
   <button>Submit</button>
 </form>
@@ -83,6 +83,7 @@ const db = firebase.firestore();
   var patientsRef = db.collection("waiting-rooms").doc(roomId).collection("patients");
   var newPatientNumber;
   var patientAvatarNumber = 3;
+  var initialWaitTime = 0;
 
   $('#verification-form').submit(function(e){
     e.preventDefault();
@@ -92,6 +93,9 @@ const db = firebase.firestore();
       $('#verification-form').css('display','none');
       $("#newPatient-form").css("display","block");
       makeNewPatientForm();
+    } else {
+      $('#verificationFormHeading').html("Your code was incorrect, Please ensure you are in the right room and try again.")
+      $('#verification-form').trigger("reset");
     }
   });
 
@@ -110,7 +114,8 @@ const db = firebase.firestore();
         timestamp: curTimeStamp,
         patientNumber: newPatientNumber,
         avatarNumber: patientAvatarNumber,
-        estimatedProcedureTime: defaultProcedureTime
+        estimatedProcedureTime: defaultProcedureTime,
+        initialWaitTime: initialWaitTime
       }).then(function(docRef) {
         console.log("Document written with ID: ", docRef.id);
         window.open("http://localhost:7123/waitingRooms/" + roomId + "/" + docRef.id, "_self");
@@ -143,6 +148,15 @@ const db = firebase.firestore();
   }
 
 
-
+patientsRef.onSnapshot(snapshot =>{
+  let changes = snapshot.docChanges();
+  changes.forEach(change =>{
+    if(change.type == 'added'){
+      initialWaitTime += change.doc.data().estimatedProcedureTime;
+    }else if (change.type == 'removed'){
+      initialWaitTime -= change.doc.data().estimatedProcedureTime;
+    }
+  })
+})
 
 </script>

@@ -18,6 +18,7 @@ body{
     align-items: center;
     height: 75px;
 }
+
 .avatarSelect{
   width: 45px;
   height: 45px;
@@ -35,4 +36,39 @@ body{
 .avatarSelect-selected{
   width: 75px;
   height: 75px;
+}
+
+.virtualLine{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+
+}
+.patientAvatar{
+  width: 45px;
+  height: 45px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 80%;
+  border-radius: 20px;
+  -webkit-transition: 0.4s ease;
+ -moz-transition: 0.4s ease;
+-o-transition: 0.4s ease;
+ -ms-transition: 0.4s ease;
+ transition: 0.4s ease;
+}
+
+.patientAvatar-selected{
+  width: 75px;
+  height: 75px;
+}
+
+.avatarHolder{
+  margin-left: 20px;
+  text-align: center;
+}
+#timeDisplayChart{
+  width: 300px;
+  height: 300px;
 }
