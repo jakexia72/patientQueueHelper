@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/jakexia72/patientQueueHelper#readme",
   "dependencies": {
+    "cors": "^2.8.5",
     "ejs": "^2.6.2",
     "express": "^4.17.1",
     "firebase": "^6.3.5",

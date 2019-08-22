@@ -118,7 +118,7 @@ const db = firebase.firestore();
         initialWaitTime: initialWaitTime
       }).then(function(docRef) {
         console.log("Document written with ID: ", docRef.id);
-        window.open("http://localhost:7123/waitingRooms/" + roomId + "/" + docRef.id, "_self");
+        window.open("http://"+ path +"/waitingRooms/" + roomId + "/" + docRef.id, "_self");
   });
     })
   });

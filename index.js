@@ -3,7 +3,7 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT ||  7123 ;
 const ejs = require('ejs')
-//const cors = require('cors');
+const cors = require('cors');
 
 
 app.use(express.static(__dirname + '/public'));
@@ -19,6 +19,11 @@ app.get('/waitingRooms/:roomId', (req, res) => {
   const roomId = req.params.roomId;
   console.log(roomId);
     res.render(path + "/views/room", {roomId});
+});
+
+app.get('/noTimeStamp/:roomId', (req, res) => {
+  const roomId = req.params.roomId;
+    res.render(path + "/views/patientLeft",{roomId});
 });
 
 app.get('/waitingRooms/:roomId/:patientId', (req, res) => {

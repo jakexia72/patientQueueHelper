@@ -1,7 +1,11 @@
 
+<head>
+   <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 <!-- The core Firebase JS SDK is always required and must be listed first -->
 <script src="https://www.gstatic.com/firebasejs/6.3.5/firebase-app.js"></script>
 
@@ -37,84 +41,155 @@
 </script>
 
 <body>
+  <!-- Modal -->
+<div class="modal fade" id="leaveModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Are you sure you want to leave?</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id = "placeInLine-modal"></p>
+          Leaving means you will lose your spot!
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">continue waiting</button>
+        <button id = "confirm-leave"type="button" class="btn btn-danger">Leave</button>
+      </div>
+    </div>
+  </div>
+</div>
+
   <div class = "mainContainer">
     <h1 style = "display:none;" id = "roomId"><%= roomId %></h1>
     <h1 style = "display:none;" id = "patientId"><%= patientId %></h1>
     <h1 id = "ticketNum"></h1>
     <div class = "container">
       <h3 id = "initTimeRemain"></h3>
-      <canvas id="timeDisplayChart"></canvas>
+      <canvas id="timeDisplayChart" width="300" height="300"></canvas>
     </div>
+
     <div id = "lineUp" class = "virtualLine">
       <div class = "avatarHolder">
-        <p>Next -></p>
+        <p>Next ›</p>
       </div>
     </div>
+    <button id = "leaveBtn" class = "btn btn-primary" data-toggle="modal" data-target="#leaveModal">Leave the Line</button>
+  </div>
+  <div class = "secondaryContainer">
+      <h1 id = "secondaryContainer-title">Looks like you're up next!</h1>
+      <h2 id = "secondaryContainer-text">Thank you for waiting, please get ready for your procedure.</h2>
+      <button id = "secondaryContainer-button" class = "btn btn-primary">I've finished my appointment</button>
   </div>
 </body>
 
 <script type="text/javascript">
+  //getting variables
   var roomId = $('#roomId').text();
   var patientId = $('#patientId').text();
+
+  var waitingRoomRef = db.collection("waiting-rooms").doc(roomId).collection("patients");
+
+  //useful global variables
   var patientTimestamp;
   var patientNumber;
   var initialTimeRemaining;
-  //Some set up
+
+  //prevent muliple pop-ups
+  var openedErrorPath = false;
+
+  //Some set up (only runs once!)
   db.collection("waiting-rooms").doc(roomId).collection("patients").doc(patientId).get().then((snapshot)=>{
     let patient = snapshot.data();
+
+    //putting in variables
     patientTimestamp = patient.timestamp;
     patientNumber = patient.patientNumber;
     initialTimeRemaining = patient.initialWaitTime;
     // patientAvatarNumber = patient.avatarNumber;
     $('#ticketNum').html(patientNumber);
+  }).catch(function(){
+    console.log("noTimeStamp1");
+    //run missing patient if the id is not present
+    missingPatient()
   })
-  // const patientTimestamp = await getTimeStamp();
-  var patientNumber;
-  // var patientAvatarNumber;
+
+
+  //waiting related variables
   var initialTimeRemaining = 0;
   var currentTimeRemaining = 0;
-
+  var numPatientsBefore = 0;
  var prevCurrentTimeRemaining = 0;
 
-  let waitingRoomRef = db.collection("waiting-rooms").doc(roomId).collection("patients");
-
-
-  // db.collection("waiting-rooms").doc(roomId).collection("patients").doc(patientId).get().then((snapshot)=>{
-  //   return snapshot.data().timestamp;
-  // })
-  //.where('timestamp', '<', patientTimestamp)
-
-
+ //main db change listener
   waitingRoomRef.orderBy('timestamp').onSnapshot(snapshot =>{
     let changes = snapshot.docChanges();
-    let atThisPatient = false;
+
     db.collection("waiting-rooms").doc(roomId).collection("patients").doc(patientId).get().then((snapshot)=>{
       patientTimestamp = snapshot.data().timestamp;
-    })
+    }).catch(function(){
+      missingPatient();
+    });
+
     changes.forEach(change =>{
       if(change.type == 'added'){
         addPatientToLine(change.doc);
-        // if(change.doc.id == patientId){
-        //   atThisPatient = true;
-        // } else if (!atThisPatient){
-        //   currentTimeRemaining += change.doc.data().estimatedProcedureTime;
-        // }
         if(change.doc.data().timestamp < patientTimestamp){
             currentTimeRemaining += change.doc.data().estimatedProcedureTime;
+            numPatientsBefore ++;
         }
       } else if (change.type == 'removed'){
         $('[data-id=' + change.doc.id + ']').remove();
         if(change.doc.data().timestamp < patientTimestamp){
           currentTimeRemaining -= change.doc.data().estimatedProcedureTime;
+          numPatientsBefore --;
         }
       }
-    })
-    console.log(prevCurrentTimeRemaining + " : " + currentTimeRemaining);
+    });
+
+    //check is patient is next, if so trigger patient is next
+    if(numPatientsBefore < 1){
+      patientIsNext();
+    }
+
+    //only update time display if there was a difference in wait time
     if(prevCurrentTimeRemaining != currentTimeRemaining){
       prevCurrentTimeRemaining = currentTimeRemaining;
       makeTimeDisplayChart(initialTimeRemaining,currentTimeRemaining);
     }
+  });
+
+  $(document).ready(function(){
+    $('#secondaryContainer-button').click(function(){
+      console.log("clickedButton");
+      leaveLine();
+    });
+    $('#leaveBtn').click(function(){
+      $('#placeInLine-modal').html("You are currently " + getOrdinal(numPatientsBefore + 1) + " in line.");
+    })
+    $('#confirm-leave').click(function(){
+      leaveLine();
+    })
   })
+
+  function missingPatient(){
+      window.open("http://"+ path +"/noTimeStamp/" + roomId, "_self");
+  }
+
+  function patientIsNext(){
+    $('.mainContainer').hide();
+    $('#secondaryContainer-button2').hide();
+    $('.secondaryContainer').show();
+  }
+
+  function leaveLine(){
+    waitingRoomRef.doc(patientId).delete().then(function() {
+      missingPatient();
+    });
+  }
 
   function addPatientToLine(doc){
     let patient = document.createElement('div');
