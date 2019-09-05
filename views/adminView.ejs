@@ -1,0 +1,123 @@
+
+<head>
+   <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+<!-- The core Firebase JS SDK is always required and must be listed first -->
+<script src="https://www.gstatic.com/firebasejs/6.3.5/firebase-app.js"></script>
+
+
+
+<!-- Add Firebase products that you want to use -->
+<script src="https://www.gstatic.com/firebasejs/6.3.4/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/6.3.4/firebase-firestore.js"></script>
+<script src="/scripts/uiEmbelishment.js" charset="utf-8"></script>
+
+<link rel="stylesheet" href="/styles/style.css">
+<script src="/scripts/main.js" charset="utf-8"></script>
+<script src="/scripts/uiEmbelishment.js" charset="utf-8"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+<script src="/scripts/external/chartjsPlugins.js"></script>
+<script src="/scripts/external/qrcode.js"></script>
+
+
+<script>
+  // Your web app's Firebase configuration
+  var firebaseConfig = {
+    apiKey: "AIzaSyB7IhY6ENIFHUjkaTVQ8UJua9MChQSlA28",
+    authDomain: "patient-queue-89500.firebaseapp.com",
+    databaseURL: "https://patient-queue-89500.firebaseio.com",
+    projectId: "patient-queue-89500",
+    storageBucket: "patient-queue-89500.appspot.com",
+    messagingSenderId: "331684236394",
+    appId: "1:331684236394:web:1b8d89f19453feaf"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+</script>
+
+<body>
+  <h1 style = "display:none;" id = "roomId"><%= roomId %></h1>
+  <div class = "mainContainer">
+    <h1 id = "roomDescriptionDisplay"></h1>
+    <h3 id = "roomLocationDisplay"></h3>
+    <div id = "QRCode" style = ""></div>
+    <h3 id = "passcode"></h3>
+  </div>
+  <div class = "mainContainer">
+    <h1>Current Patients In Line</h1>
+    <table id = "waitingList">
+
+    </table>
+  </div>
+
+</body>
+
+<script type = "text/javascript">
+  var roomId = $('#roomId').text();
+  db.collection("waiting-rooms").doc(roomId).get().then((snapshot)=>{
+      $('#roomDescriptionDisplay').html(snapshot.data().description);
+      let loc = snapshot.data().location
+      roomNum = loc.room;
+      $('#roomLocationDisplay').html(loc.building + " " + getOrdinal(loc.floor) + " floor, room " + loc.room);
+      var typeNumber = 4;
+      var errorCorrectionLevel = 'L';
+      var qr = qrcode(typeNumber, errorCorrectionLevel);
+      qr.addData("http://" + path + "/waitingRooms/" + roomId);
+      qr.make();
+      document.getElementById('QRCode').innerHTML = qr.createImgTag(4);
+      $('#passcode').html("password: " + snapshot.data().passcode);
+  });
+  var patientsRef = db.collection("waiting-rooms").doc(roomId).collection("patients");
+
+  patientsRef.onSnapshot(snapshot =>{
+    let changes = snapshot.docChanges();
+    changes.forEach(change=>{
+      if(change.type == 'added'){
+        makePatientListEntree(change.doc);
+      }else if (change.type == 'removed'){
+
+      }
+    })
+  })
+
+  function makePatientListEntree(doc){
+    let row = document.createElement('tr');
+    row.setAttribute('data-id', doc.id);
+
+    //col 1
+    let avatarHolder = document.createElement('td');
+    let avatar = document.createElement('div');
+    $(avatar).addClass("patientAvatar");
+    $(avatar).css("background-image","url(/images/avatars/"+ doc.data().avatarNumber +".svg)");
+    $(avatarHolder).append(avatar);
+
+    //col 2
+    let patientInfo = document.createElement('td');
+
+    let patientId = document.createElement('h2');
+    $(patientId).text("#" + doc.data().patientNumber);
+
+    let patientTime = document.createElement('h4');
+    $(patientTime).text("waiting since " + getHoursAndMin(doc.data().timestamp.toDate()));
+
+    $(patientInfo).append(patientId);
+    $(patientInfo).append(patientTime);
+
+
+    $(row).append(avatarHolder);
+    $(row).append(patientInfo);
+
+    $('#waitingList').append(row);
+  }
+
+  function getHoursAndMin(date){
+    return (date.getHours() % 12) + ":" + date.getMinutes() + ((date.getHours() < 12) ? ' am' : ' pm');;
+  }
+</script>

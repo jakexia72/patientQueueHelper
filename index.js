@@ -33,6 +33,12 @@ app.get('/waitingRooms/:roomId/:patientId', (req, res) => {
     res.render(path + "/views/patientView", {roomId,patientId});
 });
 
+app.get('/admin/:roomId', (req, res) =>{
+  const roomId = req.params.roomId;
+  console.log(roomId);
+  res.render(path + "/views/adminView", {roomId});
+})
+
 
 app.listen(port, () => {
   console.log("server is up and listening on " + port);
